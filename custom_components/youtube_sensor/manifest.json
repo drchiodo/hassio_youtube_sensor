@@ -6,7 +6,6 @@
   "dependencies": [],
   "documentation": "https://github.com/drchiodo/hassio_youtube_sensor",
   "homeassistant": "2023.1.0",
-  "integration_type": "entity",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/drchiodo/hassio_youtube_sensor/issues",
   "requirements": [

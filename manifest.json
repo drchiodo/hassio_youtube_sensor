@@ -1,0 +1,16 @@
+{
+  "domain": "youtube_sensor",
+  "name": "YouTube Sensor",
+  "codeowners": ["@drchiodo"],
+  "config_flow": false,
+  "dependencies": [],
+  "documentation": "https://github.com/drchiodo/hassio_youtube_sensor",
+  "homeassistant": "2025.5.3",
+  "integration_type": "entity",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/drchiodo/hassio_youtube_sensor/issues",
+  "requirements": [
+    "python-dateutil"
+  ],
+  "version": "1.0.0"
+}

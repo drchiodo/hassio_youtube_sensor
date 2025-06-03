@@ -1,3 +1,0 @@
-"""
-YouTube Sensor integration.
-"""

@@ -18,8 +18,6 @@ import re
 import html
 
 CONF_CHANNEL_ID = 'channel_id'
-                  
-
 ICON = 'mdi:youtube'
 DOMAIN = 'youtube_sensor'
 

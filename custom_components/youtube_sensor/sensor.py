@@ -19,7 +19,6 @@ import html
 
 CONF_CHANNEL_ID = 'channel_id'
 ICON = 'mdi:youtube'
-DOMAIN = 'youtube_sensor'
 
 BASE_URL = 'https://www.youtube.com/feeds/videos.xml?channel_id={}'
 CHANNEL_LIVE_URL = 'https://www.youtube.com/channel/{}'

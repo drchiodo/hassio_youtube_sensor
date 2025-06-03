@@ -47,15 +47,18 @@ A custom sensor for Home Assistant that monitors YouTube channels and provides i
 To find the YouTube channel ID:
 
 **Method A - From channel URL:**
+
 - If the URL is `https://www.youtube.com/channel/UC4V3oCikXeSqYQr0hBMARwg`
 - The ID is: `UC4V3oCikXeSqYQr0hBMARwg`
 
 **Method B - From username:**
+
 - Go to any video from the channel
 - Click on the channel name
 - The channel page URL will contain the ID after `/channel/`
 
 **Method C - Online tools:**
+
 - Use sites like `commentpicker.com/youtube-channel-id.php`
 - Enter the channel URL to get the ID
 
@@ -99,8 +102,9 @@ After adding the configuration, restart Home Assistant.
 Sensors are created with the format: `sensor.youtube_[name]`
 
 Examples:
+
 - `sensor.youtube_breaking_italy`
-- `sensor.youtube_geopop` 
+- `sensor.youtube_geopop`
 - `sensor.youtube_curiuss`
 
 ### Main State
@@ -133,36 +137,51 @@ type: entity
 entity: sensor.youtube_breaking_italy
 ```
 
-### 2. Custom Card with Image
+### 2. Custom Card with Image - Require custom:button-card component
 
 ```yaml
-type: picture-entity
+type: custom:button-card
 entity: sensor.youtube_breaking_italy
+name: Breaking Italy
 show_name: true
-show_state: true
+show_entity_picture: true
+entity_picture: |-
+  [[[
+    return states['sensor.youtube_breaking_italy'].attributes.entity_picture
+  ]]]
 tap_action:
   action: url
-  url_path: "{{ state_attr('sensor.youtube_breaking_italy', 'url') }}"
+  url_path: |-
+    [[[
+      return states['sensor.youtube_breaking_italy'].attributes.url
+    ]]]
+styles:
+  card:
+    - height: 200px
+  name:
+    - font-size: 16px
+    - font-weight: bold
+  entity_picture:
+    - border-radius: 10px
 ```
 
 ### 3. Automation for New Videos
 
 ```yaml
-automation:
-  - alias: "New Breaking Italy Video"
-    trigger:
-      - platform: state
-        entity_id: sensor.youtube_breaking_italy
-    condition:
-      - condition: template
-        value_template: "{{ trigger.from_state.state != trigger.to_state.state }}"
-    action:
-      - service: notify.mobile_app_your_phone
-        data:
-          title: "New video!"
-          message: "{{ states('sensor.youtube_breaking_italy') }}"
-          data:
-            url: "{{ state_attr('sensor.youtube_breaking_italy', 'url') }}"
+alias: Announce new video Breaking Italy
+description: Send notification when new video is available
+triggers:
+  - entity_id: sensor.youtube_breaking_italy
+    attribute: url
+    trigger: state
+conditions:
+  - condition: template
+    value_template: |
+      {{ 'watch?v=' in state_attr('sensor.youtube_breaking_italy', 'url') }}
+actions:
+  - action: notify.mobile_app_ipp
+    data:
+      message: New full video available!
 ```
 
 ### 4. Livestream Automation
@@ -185,18 +204,23 @@ automation:
 ### 5. Filter for YouTube Shorts
 
 ```yaml
-automation:
-  - alias: "New Video (No Shorts)"
-    trigger:
-      - platform: state
-        entity_id: sensor.youtube_breaking_italy
-    condition:
-      - condition: template
-        value_template: "{{ not state_attr('sensor.youtube_breaking_italy', 'is_short') }}"
-    action:
-      - service: notify.mobile_app_your_phone
-        data:
-          message: "New full video available!"
+alias: Announce new video Breaking Italy (no shorts)
+description: Send notification when new video is available, excluding YouTube Shorts
+triggers:
+  - entity_id: sensor.youtube_breaking_italy
+    attribute: url
+    trigger: state
+conditions:
+  - condition: template
+    value_template: |
+      {{ not state_attr('sensor.youtube_breaking_italy', 'is_short') }}
+  - condition: template
+    value_template: |
+      {{ 'watch?v=' in state_attr('sensor.youtube_breaking_italy', 'url') }}
+actions:
+  - action: notify.mobile_app_ipp
+    data:
+      message: New full video available!
 ```
 
 ## 🔍 Troubleshooting
@@ -211,11 +235,13 @@ automation:
 ### Common Errors
 
 **`Unable to set up`**
+
 - Channel ID is invalid
 - Channel doesn't exist or is private
 - Internet connection issues
 
 **`Could not update`**
+
 - Temporary connection issues
 - YouTube may have changed page structure
 - YouTube rate limiting
@@ -248,18 +274,15 @@ If you encounter issues:
 
 ## 📝 Changelog
 
-### v1.2.0
+### v1.0.1
+
 - Added YouTube Shorts detection
 - Improved livestream detection
 - Entity IDs with `youtube_` prefix
 - Added `friendly_name` attribute
-
-### v1.1.0
 - Support for live channels
 - Improved error handling
 - Optimized information parsing
-
-### v1.0.0
 - Initial release
 - Basic video monitoring
 - Livestream support

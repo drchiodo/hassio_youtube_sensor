@@ -1,0 +1,29 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Capteur YouTube",
+        "description": "Configurer une chaîne YouTube à surveiller",
+        "data": {
+          "channel_id": "ID de la Chaîne",
+          "name": "Nom de la Chaîne (optionnel)",
+          "includeShorts": "Inclure les YouTube Shorts"
+        },
+        "data_description": {
+          "channel_id": "L'ID de la chaîne YouTube (commence par UC, ex. {channel_id_example})",
+          "name": "Nom personnalisé pour le capteur. Si non fourni, le nom de la chaîne sera utilisé.",
+          "includeShorts": "S'il faut inclure les YouTube Shorts dans la surveillance. Si désactivé, seules les vidéos régulières seront suivies."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Échec de la connexion à la chaîne YouTube. Vérifiez votre connexion internet et réessayez.",
+      "invalid_channel_id": "ID de chaîne invalide. L'ID de la chaîne doit commencer par 'UC' et faire 24 caractères de long.",
+      "unknown": "Une erreur inattendue s'est produite. Veuillez réessayer."
+    },
+    "abort": {
+      "already_configured": "Cette chaîne YouTube est déjà configurée.",
+      "cannot_connect": "Impossible de se connecter à la chaîne YouTube."
+    }
+  }
+}

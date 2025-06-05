@@ -1,10 +1,11 @@
 # YouTube Sensor for Home Assistant
 
-A custom sensor for Home Assistant that monitors YouTube channels and provides information about the latest videos, including livestreams and YouTube Shorts. Features a modern **graphical configuration interface** for easy setup!
+A custom sensor for Home Assistant that monitors YouTube channels and provides information about the latest videos, including livestreams and YouTube Shorts. Features a modern **graphical configuration interface** with **multi-language support** for easy setup!
 
 ## 🚀 Features
 
 - **🖥️ Graphical Configuration**: Easy setup through Home Assistant's UI (no more YAML editing!)
+- **🌍 Multi-language Support**: Interface available in English, Italian, Spanish, French, German, and more
 - **📺 Video monitoring**: Track the latest video published on a YouTube channel
 - **🔴 Livestream detection**: Detect when a channel is live or when a video is a stream
 - **🎬 YouTube Shorts support**: Automatically identify Short videos with option to include/exclude them
@@ -26,9 +27,10 @@ A custom sensor for Home Assistant that monitors YouTube channels and provides i
 1. Download all files from the repository
 2. Create the `custom_components/youtube_sensor/` folder in your Home Assistant configuration directory
 3. Copy all files (`__init__.py`, `config_flow.py`, `const.py`, `manifest.json`, `sensor.py`, `strings.json`) into the created folder
-4. Restart Home Assistant
-5. Go to **Settings → Devices & Services → Add Integration**
-6. Search for "YouTube Sensor" and click to add
+4. **Optional**: Copy the `translations/` folder for multi-language support
+5. Restart Home Assistant
+6. Go to **Settings → Devices & Services → Add Integration**
+7. Search for "YouTube Sensor" and click to add
 
 ### Method 2: Via HACS
 
@@ -60,6 +62,18 @@ A custom sensor for Home Assistant that monitors YouTube channels and provides i
    - **Include YouTube Shorts**: Toggle to include/exclude Shorts
 
 5. **Click "Submit"** - the integration will validate the channel and create your sensor!
+
+### 🌍 Multi-language Support
+
+The integration interface is available in multiple languages:
+
+- **🇺🇸 English** (default)
+- **🇮🇹 Italian**
+- **🇪🇸 Spanish**
+- **🇫🇷 French**
+- **🇩🇪 German**
+
+The interface automatically adapts to your Home Assistant language settings. Additional languages can be easily added by contributing translation files.
 
 ### 📺 Getting the YouTube Channel ID
 
@@ -126,12 +140,13 @@ This allows you to have granular control over what type of content triggers your
 
 ### Entity ID
 
-Sensors are created with the format: `sensor.youtube_[channel_id]`
+Sensors are created with the format: `sensor.youtube_[channel_name]`
 
 Examples:
 
-- `sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg` (Breaking Italy)
-- `sensor.youtube_UCx7EWheHmjCW3vX8K2d09vg` (GeoPop)
+- `sensor.youtube_breaking_italy`
+- `sensor.youtube_geopop`
+- `sensor.youtube_curiuss`
 
 ### Main State
 
@@ -161,26 +176,26 @@ The sensor state contains the **title of the latest published video** (filtered 
 
 ```yaml
 type: entity
-entity: sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg
+entity: sensor.youtube_breaking_italy
 ```
 
 ### 2. Custom Card with Image - Requires custom:button-card component
 
 ```yaml
 type: custom:button-card
-entity: sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg
+entity: sensor.youtube_breaking_italy
 name: Breaking Italy
 show_name: true
 show_entity_picture: true
 entity_picture: |-
   [[[
-    return states['sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg'].attributes.entity_picture
+    return states['sensor.youtube_breaking_italy'].attributes.entity_picture
   ]]]
 tap_action:
   action: url
   url_path: |-
     [[[
-      return states['sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg'].attributes.url
+      return states['sensor.youtube_breaking_italy'].attributes.url
     ]]]
 styles:
   card:
@@ -198,13 +213,13 @@ styles:
 alias: Announce new video Breaking Italy
 description: Send notification when new video is available
 triggers:
-  - entity_id: sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg
+  - entity_id: sensor.youtube_breaking_italy
     attribute: url
     trigger: state
 conditions:
   - condition: template
     value_template: |
-      {{ 'watch?v=' in state_attr('sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg', 'url') }}
+      {{ 'watch?v=' in state_attr('sensor.youtube_breaking_italy', 'url') }}
 actions:
   - action: notify.mobile_app_ipp
     data:
@@ -217,16 +232,16 @@ actions:
 alias: Announce new full video Breaking Italy
 description: Send notification when new regular video is available (no Shorts)
 triggers:
-  - entity_id: sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg
+  - entity_id: sensor.youtube_breaking_italy
     attribute: url
     trigger: state
 conditions:
   - condition: template
     value_template: |
-      {{ not state_attr('sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg', 'is_short') }}
+      {{ not state_attr('sensor.youtube_breaking_italy', 'is_short') }}
   - condition: template
     value_template: |
-      {{ 'watch?v=' in state_attr('sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg', 'url') }}
+      {{ 'watch?v=' in state_attr('sensor.youtube_breaking_italy', 'url') }}
 actions:
   - action: notify.mobile_app_ipp
     data:
@@ -239,16 +254,16 @@ actions:
 alias: Announce new Short Breaking Italy
 description: Send notification when new YouTube Short is available
 triggers:
-  - entity_id: sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg
+  - entity_id: sensor.youtube_breaking_italy
     attribute: url
     trigger: state
 conditions:
   - condition: template
     value_template: |
-      {{ state_attr('sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg', 'is_short') }}
+      {{ state_attr('sensor.youtube_breaking_italy', 'is_short') }}
   - condition: template
     value_template: |
-      {{ 'watch?v=' in state_attr('sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg', 'url') }}
+      {{ 'watch?v=' in state_attr('sensor.youtube_breaking_italy', 'url') }}
 actions:
   - action: notify.mobile_app_ipp
     data:
@@ -262,7 +277,7 @@ automation:
   - alias: "Breaking Italy is Live"
     trigger:
       - platform: state
-        entity_id: sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg
+        entity_id: sensor.youtube_breaking_italy
         attribute: live
         to: true
     action:
@@ -278,11 +293,11 @@ automation:
 type: vertical-stack
 cards:
   - type: custom:button-card
-    entity: sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg
+    entity: sensor.youtube_breaking_italy
     name: Breaking Italy
     show_entity_picture: true
   - type: custom:button-card
-    entity: sensor.youtube_UCx7EWheHmjCW3vX8K2d09vg
+    entity: sensor.youtube_geopop
     name: GeoPop
     show_entity_picture: true
 ```
@@ -299,27 +314,32 @@ cards:
 ### Setup Errors
 
 **"Invalid channel ID"**
+
 - Channel ID must start with "UC"
 - Channel ID must be exactly 24 characters long
 - Example: `UC4V3oCikXeSqYQr0hBMARwg`
 
 **"Cannot connect to YouTube channel"**
+
 - Check your internet connection
 - Verify the channel exists and is public
 - Channel might be temporarily unavailable
 
 **"Already configured"**
+
 - This channel is already being monitored
 - Check existing integrations in Settings → Devices & Services
 
 ### Sensor Issues
 
 **"No non-Short videos found in feed"**
+
 - This warning appears when "Include Shorts" is OFF but the channel has only posted Shorts recently
 - The sensor will fallback to the most recent video regardless of type
 - Consider enabling "Include Shorts" if the channel posts many Shorts
 
 **Sensor shows "Unknown" or "Unavailable"**
+
 - Temporary connection issues
 - YouTube may have changed page structure
 - YouTube rate limiting - wait and it should recover
@@ -327,6 +347,7 @@ cards:
 ### Migration from YAML
 
 **Existing sensors disappeared**
+
 - After installing the integration, existing YAML sensors are replaced
 - Re-add channels through the UI configuration
 - Your automations will work with the new entity IDs
@@ -343,6 +364,7 @@ logger:
 ```
 
 Debug logs will show:
+
 - Integration setup process
 - Channel validation results
 - Whether Shorts are being included or excluded
@@ -369,6 +391,62 @@ Debug logs will show:
 2. Find your YouTube channel entry
 3. Click the **three dots** and select **"Delete"**
 
+## 🌍 Contributing Translations
+
+We welcome translations for additional languages! Here's how to contribute:
+
+### File Structure
+
+```
+custom_components/youtube_sensor/
+├── strings.json          # English (default)
+└── translations/
+    ├── it.json           # Italian
+    ├── es.json           # Spanish  
+    ├── fr.json           # French
+    ├── de.json           # German
+    └── [your_lang].json  # Your language
+```
+
+### Supported Languages
+
+Currently available translations:
+
+- 🇺🇸 **English** (`en`) - Default
+- 🇮🇹 **Italian** (`it`) - Complete
+- 🇪🇸 **Spanish** (`es`) - Complete  
+- 🇫🇷 **French** (`fr`) - Complete
+- 🇩🇪 **German** (`de`) - Complete
+
+### Adding a New Language
+
+1. **Copy the English template** from `strings.json`
+2. **Create** `translations/[language_code].json`
+3. **Translate all text strings** while keeping the JSON structure
+4. **Submit a pull request** with your translation
+
+### Language Codes
+
+Use standard ISO 639-1 language codes:
+
+- `pt` = Portuguese
+- `nl` = Dutch  
+- `ru` = Russian
+- `zh` = Chinese
+- `ja` = Japanese
+- `ko` = Korean
+- `sv` = Swedish
+- `no` = Norwegian
+- `da` = Danish
+- `fi` = Finnish
+
+### Translation Guidelines
+
+- Keep technical terms like "Channel ID" consistent
+- Maintain the same tone (helpful and professional)
+- Test your translation by changing Home Assistant language settings
+- Ensure special characters are properly escaped in JSON
+
 ## ⚡ Performance and Limits
 
 - **Update frequency**: Sensor respects YouTube's cache headers (typically 15-30 minutes)
@@ -393,6 +471,7 @@ If you encounter issues:
 ### v2.0.0 - Major Update! 🎉
 
 - **NEW**: Full graphical configuration interface (Config Flow)
+- **NEW**: Multi-language support (English, Italian, Spanish, French, German)
 - **NEW**: Modern Home Assistant integration architecture
 - **NEW**: Automatic migration from YAML configurations
 - **NEW**: Real-time channel validation during setup
@@ -434,4 +513,4 @@ This project is released under the MIT License. See the LICENSE file for details
 
 **⭐ If this sensor is useful to you, consider starring the repository!**
 
-**🎯 Now with modern UI configuration - no more YAML editing required!**
+**🎯 Now with modern UI configuration and multi-language support - no more YAML editing required!**

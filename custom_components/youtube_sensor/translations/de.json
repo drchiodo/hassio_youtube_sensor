@@ -1,0 +1,29 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "YouTube Sensor",
+        "description": "Einen YouTube-Kanal zur Überwachung konfigurieren",
+        "data": {
+          "channel_id": "Kanal-ID",
+          "name": "Kanalname (optional)",
+          "includeShorts": "YouTube Shorts einbeziehen"
+        },
+        "data_description": {
+          "channel_id": "Die YouTube-Kanal-ID (beginnt mit UC, z.B. {channel_id_example})",
+          "name": "Benutzerdefinierter Name für den Sensor. Wenn nicht angegeben, wird der Kanalname verwendet.",
+          "includeShorts": "Ob YouTube Shorts in die Überwachung einbezogen werden sollen. Wenn deaktiviert, werden nur reguläre Videos verfolgt."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Verbindung zum YouTube-Kanal fehlgeschlagen. Überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
+      "invalid_channel_id": "Ungültige Kanal-ID. Die Kanal-ID muss mit 'UC' beginnen und 24 Zeichen lang sein.",
+      "unknown": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+    },
+    "abort": {
+      "already_configured": "Dieser YouTube-Kanal ist bereits konfiguriert.",
+      "cannot_connect": "Verbindung zum YouTube-Kanal nicht möglich."
+    }
+  }
+}

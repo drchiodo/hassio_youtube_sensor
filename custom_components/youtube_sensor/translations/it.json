@@ -1,0 +1,29 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Sensore YouTube",
+        "description": "Configura un canale YouTube da monitorare",
+        "data": {
+          "channel_id": "ID Canale",
+          "name": "Nome Canale (opzionale)",
+          "includeShorts": "Includi YouTube Shorts"
+        },
+        "data_description": {
+          "channel_id": "L'ID del canale YouTube (inizia con UC, es. {channel_id_example})",
+          "name": "Nome personalizzato per il sensore. Se non fornito, verrà utilizzato il nome del canale.",
+          "includeShorts": "Se includere gli YouTube Shorts nel monitoraggio. Se disabilitato, verranno tracciati solo i video regolari."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Impossibile connettersi al canale YouTube. Controlla la connessione internet e riprova.",
+      "invalid_channel_id": "ID canale non valido. L'ID del canale deve iniziare con 'UC' ed essere lungo 24 caratteri.",
+      "unknown": "Si è verificato un errore imprevisto. Riprova."
+    },
+    "abort": {
+      "already_configured": "Questo canale YouTube è già configurato.",
+      "cannot_connect": "Impossibile connettersi al canale YouTube."
+    }
+  }
+}

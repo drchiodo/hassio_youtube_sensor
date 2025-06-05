@@ -1,15 +1,17 @@
 # YouTube Sensor for Home Assistant
 
-A custom sensor for Home Assistant that monitors YouTube channels and provides information about the latest videos, including livestreams and YouTube Shorts.
+A custom sensor for Home Assistant that monitors YouTube channels and provides information about the latest videos, including livestreams and YouTube Shorts. Features a modern **graphical configuration interface** for easy setup!
 
 ## 🚀 Features
 
-- **Video monitoring**: Track the latest video published on a YouTube channel
-- **Livestream detection**: Detect when a channel is live or when a video is a stream
-- **YouTube Shorts support**: Automatically identify Short videos with option to include/exclude them
-- **Flexible filtering**: Choose whether to include or exclude YouTube Shorts from monitoring
-- **Complete metadata**: Views, stars, publication date, thumbnails
-- **Automatic updates**: Self-updating while respecting YouTube's limits
+- **🖥️ Graphical Configuration**: Easy setup through Home Assistant's UI (no more YAML editing!)
+- **📺 Video monitoring**: Track the latest video published on a YouTube channel
+- **🔴 Livestream detection**: Detect when a channel is live or when a video is a stream
+- **🎬 YouTube Shorts support**: Automatically identify Short videos with option to include/exclude them
+- **⚙️ Flexible filtering**: Choose whether to include or exclude YouTube Shorts from monitoring
+- **📊 Complete metadata**: Views, stars, publication date, thumbnails
+- **🔄 Automatic updates**: Self-updating while respecting YouTube's limits
+- **🔧 Migration support**: Automatically imports existing YAML configurations
 
 ## 📋 Requirements
 
@@ -21,10 +23,12 @@ A custom sensor for Home Assistant that monitors YouTube channels and provides i
 
 ### Method 1: Manual Installation
 
-1. Download the `sensor.py` file
+1. Download all files from the repository
 2. Create the `custom_components/youtube_sensor/` folder in your Home Assistant configuration directory
-3. Copy the `sensor.py` file into the created folder
+3. Copy all files (`__init__.py`, `config_flow.py`, `const.py`, `manifest.json`, `sensor.py`, `strings.json`) into the created folder
 4. Restart Home Assistant
+5. Go to **Settings → Devices & Services → Add Integration**
+6. Search for "YouTube Sensor" and click to add
 
 ### Method 2: Via HACS
 
@@ -40,10 +44,24 @@ A custom sensor for Home Assistant that monitors YouTube channels and provides i
 10. Search for "YouTube Sensor"
 11. Click "DOWNLOAD" and then "DOWNLOAD" again
 12. Restart Home Assistant
+13. Go to **Settings → Devices & Services → Add Integration**
+14. Search for "YouTube Sensor" and click to add
 
 ## ⚙️ Configuration
 
-### 1. Getting the YouTube Channel ID
+### 🎯 Graphical Configuration (Recommended)
+
+1. **Navigate to Settings → Devices & Services**
+2. **Click "Add Integration"**
+3. **Search for "YouTube Sensor"**
+4. **Fill out the configuration form:**
+   - **Channel ID**: The YouTube channel ID (starts with UC)
+   - **Channel Name** (optional): Custom name for your sensor
+   - **Include YouTube Shorts**: Toggle to include/exclude Shorts
+
+5. **Click "Submit"** - the integration will validate the channel and create your sensor!
+
+### 📺 Getting the YouTube Channel ID
 
 To find the YouTube channel ID:
 
@@ -63,9 +81,9 @@ To find the YouTube channel ID:
 - Use sites like `commentpicker.com/youtube-channel-id.php`
 - Enter the channel URL to get the ID
 
-### 2. Home Assistant Configuration
+### 📝 Legacy YAML Configuration (Still Supported)
 
-Add the configuration to your `configuration.yaml` file:
+If you prefer YAML configuration, add this to your `configuration.yaml` file:
 
 ```yaml
 sensor:
@@ -87,41 +105,37 @@ sensor:
     includeShorts: true
 ```
 
-### 3. Configuration Parameters
+**Note**: Existing YAML configurations will be automatically detected and can be migrated to the UI if desired.
+
+## 🔧 Configuration Parameters
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `platform` | string | Yes | - | Must be `youtube_sensor` |
-| `channel_id` | string | Yes | - | YouTube channel ID (starts with UC) |
-| `name` | string | No | Channel name | Custom name for the sensor |
-| `includeShorts` | boolean | No | `false` | Whether to include YouTube Shorts in monitoring |
+| **Channel ID** | string | Yes | - | YouTube channel ID (starts with UC, 24 characters) |
+| **Channel Name** | string | No | Auto-detected | Custom name for the sensor |
+| **Include YouTube Shorts** | boolean | No | `false` | Whether to include YouTube Shorts in monitoring |
 
-### 4. YouTube Shorts Behavior
+### 🎬 YouTube Shorts Behavior
 
-- **`includeShorts: false`** (default): The sensor will find the latest **regular video**, skipping any YouTube Shorts
-- **`includeShorts: true`**: The sensor will find the latest **video of any type**, including YouTube Shorts
+- **Include Shorts: OFF** (default): The sensor will find the latest **regular video**, skipping any YouTube Shorts
+- **Include Shorts: ON**: The sensor will find the latest **video of any type**, including YouTube Shorts
 
 This allows you to have granular control over what type of content triggers your automations.
-
-### 5. Restart
-
-After adding the configuration, restart Home Assistant.
 
 ## 📊 Entities and Attributes
 
 ### Entity ID
 
-Sensors are created with the format: `sensor.youtube_[name]`
+Sensors are created with the format: `sensor.youtube_[channel_id]`
 
 Examples:
 
-- `sensor.youtube_breaking_italy`
-- `sensor.youtube_geopop`
-- `sensor.youtube_curiuss`
+- `sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg` (Breaking Italy)
+- `sensor.youtube_UCx7EWheHmjCW3vX8K2d09vg` (GeoPop)
 
 ### Main State
 
-The sensor state contains the **title of the latest published video** (filtered by your `includeShorts` setting).
+The sensor state contains the **title of the latest published video** (filtered by your Shorts setting).
 
 ### Available Attributes
 
@@ -147,26 +161,26 @@ The sensor state contains the **title of the latest published video** (filtered 
 
 ```yaml
 type: entity
-entity: sensor.youtube_breaking_italy
+entity: sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg
 ```
 
-### 2. Custom Card with Image - Require custom:button-card component
+### 2. Custom Card with Image - Requires custom:button-card component
 
 ```yaml
 type: custom:button-card
-entity: sensor.youtube_breaking_italy
+entity: sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg
 name: Breaking Italy
 show_name: true
 show_entity_picture: true
 entity_picture: |-
   [[[
-    return states['sensor.youtube_breaking_italy'].attributes.entity_picture
+    return states['sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg'].attributes.entity_picture
   ]]]
 tap_action:
   action: url
   url_path: |-
     [[[
-      return states['sensor.youtube_breaking_italy'].attributes.url
+      return states['sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg'].attributes.url
     ]]]
 styles:
   card:
@@ -184,13 +198,13 @@ styles:
 alias: Announce new video Breaking Italy
 description: Send notification when new video is available
 triggers:
-  - entity_id: sensor.youtube_breaking_italy
+  - entity_id: sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg
     attribute: url
     trigger: state
 conditions:
   - condition: template
     value_template: |
-      {{ 'watch?v=' in state_attr('sensor.youtube_breaking_italy', 'url') }}
+      {{ 'watch?v=' in state_attr('sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg', 'url') }}
 actions:
   - action: notify.mobile_app_ipp
     data:
@@ -203,16 +217,16 @@ actions:
 alias: Announce new full video Breaking Italy
 description: Send notification when new regular video is available (no Shorts)
 triggers:
-  - entity_id: sensor.youtube_breaking_italy
+  - entity_id: sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg
     attribute: url
     trigger: state
 conditions:
   - condition: template
     value_template: |
-      {{ not state_attr('sensor.youtube_breaking_italy', 'is_short') }}
+      {{ not state_attr('sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg', 'is_short') }}
   - condition: template
     value_template: |
-      {{ 'watch?v=' in state_attr('sensor.youtube_breaking_italy', 'url') }}
+      {{ 'watch?v=' in state_attr('sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg', 'url') }}
 actions:
   - action: notify.mobile_app_ipp
     data:
@@ -225,16 +239,16 @@ actions:
 alias: Announce new Short Breaking Italy
 description: Send notification when new YouTube Short is available
 triggers:
-  - entity_id: sensor.youtube_breaking_italy
+  - entity_id: sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg
     attribute: url
     trigger: state
 conditions:
   - condition: template
     value_template: |
-      {{ state_attr('sensor.youtube_breaking_italy', 'is_short') }}
+      {{ state_attr('sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg', 'is_short') }}
   - condition: template
     value_template: |
-      {{ 'watch?v=' in state_attr('sensor.youtube_breaking_italy', 'url') }}
+      {{ 'watch?v=' in state_attr('sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg', 'url') }}
 actions:
   - action: notify.mobile_app_ipp
     data:
@@ -248,7 +262,7 @@ automation:
   - alias: "Breaking Italy is Live"
     trigger:
       - platform: state
-        entity_id: sensor.youtube_breaking_italy
+        entity_id: sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg
         attribute: live
         to: true
     action:
@@ -258,51 +272,64 @@ automation:
           message: "Breaking Italy is live!"
 ```
 
-### 7. Multi-Channel Setup with Different Settings
+### 7. Multi-Channel Dashboard
 
 ```yaml
-sensor:
-  # Channel that posts mostly regular videos - exclude Shorts
-  - platform: youtube_sensor
-    channel_id: UC4V3oCikXeSqYQr0hBMARwg
-    name: "Breaking Italy"
-    includeShorts: false
-  
-  # Channel that posts lots of Shorts - include everything
-  - platform: youtube_sensor
-    channel_id: UCx7EWheHmjCW3vX8K2d09vg
-    name: "Tech Shorts"
-    includeShorts: true
+type: vertical-stack
+cards:
+  - type: custom:button-card
+    entity: sensor.youtube_UC4V3oCikXeSqYQr0hBMARwg
+    name: Breaking Italy
+    show_entity_picture: true
+  - type: custom:button-card
+    entity: sensor.youtube_UCx7EWheHmjCW3vX8K2d09vg
+    name: GeoPop
+    show_entity_picture: true
 ```
 
 ## 🔍 Troubleshooting
 
-### Sensor Doesn't Appear
+### Integration Not Found
 
-1. Verify that the channel ID is correct (must start with `UC`)
-2. Check Home Assistant logs for errors
-3. Make sure the channel is public
-4. Restart Home Assistant after changes
+1. **Verify installation**: Ensure all files are in `custom_components/youtube_sensor/`
+2. **Restart Home Assistant** completely
+3. **Clear browser cache** and refresh the page
+4. **Check logs** for any loading errors
 
-### Common Errors
+### Setup Errors
 
-**`Unable to set up`**
+**"Invalid channel ID"**
+- Channel ID must start with "UC"
+- Channel ID must be exactly 24 characters long
+- Example: `UC4V3oCikXeSqYQr0hBMARwg`
 
-- Channel ID is invalid
-- Channel doesn't exist or is private
-- Internet connection issues
+**"Cannot connect to YouTube channel"**
+- Check your internet connection
+- Verify the channel exists and is public
+- Channel might be temporarily unavailable
 
-**`Could not update`**
+**"Already configured"**
+- This channel is already being monitored
+- Check existing integrations in Settings → Devices & Services
 
+### Sensor Issues
+
+**"No non-Short videos found in feed"**
+- This warning appears when "Include Shorts" is OFF but the channel has only posted Shorts recently
+- The sensor will fallback to the most recent video regardless of type
+- Consider enabling "Include Shorts" if the channel posts many Shorts
+
+**Sensor shows "Unknown" or "Unavailable"**
 - Temporary connection issues
 - YouTube may have changed page structure
-- YouTube rate limiting
+- YouTube rate limiting - wait and it should recover
 
-**`No non-Short videos found in feed`**
+### Migration from YAML
 
-- This warning appears when `includeShorts: false` but the channel has only posted Shorts recently
-- The sensor will fallback to the most recent video regardless of type
-- Consider setting `includeShorts: true` if the channel posts many Shorts
+**Existing sensors disappeared**
+- After installing the integration, existing YAML sensors are replaced
+- Re-add channels through the UI configuration
+- Your automations will work with the new entity IDs
 
 ### Debug
 
@@ -316,28 +343,64 @@ logger:
 ```
 
 Debug logs will show:
+- Integration setup process
+- Channel validation results
 - Whether Shorts are being included or excluded
 - Which videos are being skipped and why
 - Video detection results
 
+## 🛠️ Management
+
+### Adding More Channels
+
+1. Go to **Settings → Devices & Services**
+2. Find "YouTube Sensor" and click **"Configure"**
+3. Click **"Add Entry"** to add another channel
+
+### Modifying Existing Channels
+
+1. Go to **Settings → Devices & Services**
+2. Find your YouTube channel entry
+3. Click **"Configure"** to modify settings
+
+### Removing Channels
+
+1. Go to **Settings → Devices & Services**
+2. Find your YouTube channel entry
+3. Click the **three dots** and select **"Delete"**
+
 ## ⚡ Performance and Limits
 
-- **Update frequency**: Sensor respects YouTube's cache headers
+- **Update frequency**: Sensor respects YouTube's cache headers (typically 15-30 minutes)
 - **Rate limiting**: YouTube may limit too frequent requests
 - **Timeout**: Requests timeout after 10 seconds to prevent blocking
 - **Shorts detection**: Additional HTTP request per video to determine if it's a Short
+- **Concurrent sensors**: No limit on number of channels you can monitor
 
 ## 🆘 Support
 
 If you encounter issues:
 
-1. Check Home Assistant logs
-2. Verify your configuration
-3. Make sure the channel ID is correct
-4. Try with a different channel to test
-5. Enable debug logging to see detailed operation
+1. **Check the integration status** in Settings → Devices & Services
+2. **Verify your configuration** through the UI
+3. **Enable debug logging** to see detailed operation
+4. **Check Home Assistant logs** for specific errors
+5. **Try with a different channel** to isolate issues
+6. **Report bugs** on GitHub with debug logs
 
 ## 📝 Changelog
+
+### v2.0.0 - Major Update! 🎉
+
+- **NEW**: Full graphical configuration interface (Config Flow)
+- **NEW**: Modern Home Assistant integration architecture
+- **NEW**: Automatic migration from YAML configurations
+- **NEW**: Real-time channel validation during setup
+- **NEW**: Prevention of duplicate channel configurations
+- **NEW**: Enhanced error handling with descriptive messages
+- **IMPROVED**: Entity IDs now use channel ID for better uniqueness
+- **IMPROVED**: Support for both UI and YAML configuration methods
+- **IMPROVED**: Better integration management and removal
 
 ### v1.1.0
 
@@ -370,3 +433,5 @@ This project is released under the MIT License. See the LICENSE file for details
 ---
 
 **⭐ If this sensor is useful to you, consider starring the repository!**
+
+**🎯 Now with modern UI configuration - no more YAML editing required!**

@@ -10,22 +10,27 @@ import async_timeout
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
-from homeassistant.components.sensor import PLATFORM_SCHEMA
-from homeassistant.helpers.entity import Entity
+from homeassistant.components.sensor import PLATFORM_SCHEMA, SensorEntity
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from dateutil.parser import parse
 from homeassistant.const import CONF_NAME
 import re
 import html
 import xml.etree.ElementTree as ET
 
-CONF_CHANNEL_ID = 'channel_id'
-CONF_INCLUDE_SHORTS = 'includeShorts'
-ICON = 'mdi:youtube'
+from .const import (
+    DOMAIN,
+    CONF_CHANNEL_ID,
+    CONF_INCLUDE_SHORTS,
+    ICON,
+    BASE_URL,
+    CHANNEL_LIVE_URL,
+    SHORTS_URL,
+)
 
-BASE_URL = 'https://www.youtube.com/feeds/videos.xml?channel_id={}'
-CHANNEL_LIVE_URL = 'https://www.youtube.com/channel/{}'
-SHORTS_URL = 'https://www.youtube.com/shorts/{}'
-
+# Manteniamo il supporto per configuration.yaml per retrocompatibilità
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_CHANNEL_ID): cv.string,
     vol.Optional(CONF_NAME): cv.string,
@@ -35,9 +40,24 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
 _LOGGER = logging.getLogger(__name__)
 
 
+async def async_setup_entry(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up YouTube Sensor from config entry."""
+    channel_id = config_entry.data[CONF_CHANNEL_ID]
+    name = config_entry.data[CONF_NAME]
+    include_shorts = config_entry.data.get(CONF_INCLUDE_SHORTS, False)
+    
+    session = async_create_clientsession(hass)
+    
+    async_add_entities([YoutubeSensor(channel_id, name, session, include_shorts)], True)
+
+
 async def async_setup_platform(
         hass, config, async_add_entities, discovery_info=None):  # pylint: disable=unused-argument
-    """Setup sensor platform."""
+    """Setup sensor platform (legacy configuration.yaml support)."""
     channel_id = config['channel_id']
     custom_name = config.get('name')  # Nome personalizzato opzionale
     include_shorts = config.get('includeShorts', False)  # Parametro per includere Shorts
@@ -58,12 +78,13 @@ async def async_setup_platform(
         display_name = custom_name if custom_name else name
         async_add_entities([YoutubeSensor(channel_id, display_name, session, include_shorts)], True)
 
-class YoutubeSensor(Entity):
+
+class YoutubeSensor(SensorEntity):
     """YouTube Sensor class"""
     def __init__(self, channel_id, name, session, include_shorts=False):
-        self._state = None
+        self._attr_native_value = None
         self.session = session
-        self._image = None
+        self._attr_entity_picture = None
         self.stars = 0
         self.views = 0
         self.stream = False
@@ -79,6 +100,11 @@ class YoutubeSensor(Entity):
         self.stream_start = None
         self.is_short = False
         self.include_shorts = include_shorts  # Nuovo parametro
+        
+        # Attributi per config entry
+        self._attr_unique_id = f"youtube_{channel_id}"
+        self._attr_name = f"youtube_{name}"
+        self._attr_icon = ICON
 
     async def async_update(self):
         """Update sensor - trova il primo video secondo le impostazioni di includeShorts."""
@@ -168,8 +194,8 @@ class YoutubeSensor(Entity):
                     self.url = video_url
                     self.content_id = temp_video_id
                     self.published = published_date
-                    self._state = html.unescape(title)
-                    self._image = thumbnail_url
+                    self._attr_native_value = html.unescape(title)
+                    self._attr_entity_picture = thumbnail_url
                     self.stars = stars
                     self.views = views
                     self.is_short = is_short
@@ -196,8 +222,8 @@ class YoutubeSensor(Entity):
                 self.content_id = url.split('?v=')[1]
                 self.published = info.split('<published>')[2].split('</')[0]
                 thumbnail_url = info.split('<media:thumbnail url="')[1].split('"')[0]
-                self._state = html.unescape(title)
-                self._image = thumbnail_url
+                self._attr_native_value = html.unescape(title)
+                self._attr_entity_picture = thumbnail_url
                 self.stars = info.split('<media:starRating count="')[1].split('"')[0]
                 self.views = info.split('<media:statistics views="')[1].split('"')[0]
                 self.is_short = await is_youtube_short(self.content_id, self._name, self.session)
@@ -217,18 +243,17 @@ class YoutubeSensor(Entity):
     @property
     def entity_picture(self):
         """Picture."""
-        return self._image
+        return self._attr_entity_picture
 
     @property
-    def state(self):
+    def native_value(self):
         """State."""
-        return self._state
+        return self._attr_native_value
 
     @property
     def unique_id(self):
         """Return unique ID for this sensor."""
-        safe_name = re.sub(r'[^a-zA-Z0-9_]', '_', self._name.lower())
-        return f"youtube_{safe_name}"
+        return f"youtube_{self.channel_id}"
 
     @property
     def icon(self):
@@ -252,6 +277,7 @@ class YoutubeSensor(Entity):
                 'include_shorts': self.include_shorts,  # Aggiunto per debug
                 'friendly_name': self._name}
 
+
 async def is_live(url, name, hass, session):
     """Return bool if video is stream and bool if video is live"""
     live = False
@@ -271,6 +297,7 @@ async def is_live(url, name, hass, session):
         _LOGGER.debug('%s - Could not update - %s', name, error)
     return stream, live, start
 
+
 async def is_channel_live(url, name, hass, session):
     """Return bool if channel is live"""
     live = False
@@ -289,6 +316,7 @@ async def is_channel_live(url, name, hass, session):
     except Exception as error:  # pylint: disable=broad-except
         _LOGGER.debug('%s - Could not update - %s', name, error)
     return live, channel_image
+
 
 async def is_youtube_short(video_id, name, session):
     """Check if a video is a YouTube Short with stricter validation to reduce false positives"""

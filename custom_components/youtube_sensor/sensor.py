@@ -24,6 +24,8 @@ from .const import (
     DOMAIN,
     CONF_CHANNEL_ID,
     CONF_INCLUDE_SHORTS,
+    CONF_SCAN_INTERVAL,
+    DEFAULT_SCAN_INTERVAL,
     ICON,
     BASE_URL,
     CHANNEL_LIVE_URL,
@@ -35,6 +37,9 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_CHANNEL_ID): cv.string,
     vol.Optional(CONF_NAME): cv.string,
     vol.Optional(CONF_INCLUDE_SHORTS, default=False): cv.boolean,
+    vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): vol.All(
+        vol.Coerce(int), vol.Range(min=5, max=120)
+    ),
 })
 
 _LOGGER = logging.getLogger(__name__)
@@ -49,10 +54,11 @@ async def async_setup_entry(
     channel_id = config_entry.data[CONF_CHANNEL_ID]
     name = config_entry.data[CONF_NAME]
     include_shorts = config_entry.data.get(CONF_INCLUDE_SHORTS, False)
+    scan_interval = config_entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
     
     session = async_create_clientsession(hass)
     
-    async_add_entities([YoutubeSensor(channel_id, name, session, include_shorts)], True)
+    async_add_entities([YoutubeSensor(channel_id, name, session, include_shorts, scan_interval)], True)
 
 
 async def async_setup_platform(
@@ -61,6 +67,7 @@ async def async_setup_platform(
     channel_id = config['channel_id']
     custom_name = config.get('name')  # Nome personalizzato opzionale
     include_shorts = config.get('includeShorts', False)  # Parametro per includere Shorts
+    scan_interval = config.get('scan_interval', DEFAULT_SCAN_INTERVAL)  # Intervallo di scansione
     session = async_create_clientsession(hass)
     
     try:
@@ -76,12 +83,12 @@ async def async_setup_platform(
     if name is not None:
         # Usa il nome personalizzato se fornito, altrimenti usa quello dal canale
         display_name = custom_name if custom_name else name
-        async_add_entities([YoutubeSensor(channel_id, display_name, session, include_shorts)], True)
+        async_add_entities([YoutubeSensor(channel_id, display_name, session, include_shorts, scan_interval)], True)
 
 
 class YoutubeSensor(SensorEntity):
     """YouTube Sensor class"""
-    def __init__(self, channel_id, name, session, include_shorts=False):
+    def __init__(self, channel_id, name, session, include_shorts=False, scan_interval=DEFAULT_SCAN_INTERVAL):
         self._attr_native_value = None
         self.session = session
         self._attr_entity_picture = None
@@ -99,19 +106,28 @@ class YoutubeSensor(SensorEntity):
         self.expiry = parse('01 Jan 1900 00:00:00 UTC')
         self.stream_start = None
         self.is_short = False
-        self.include_shorts = include_shorts  # Nuovo parametro
+        self.include_shorts = include_shorts  # Parametro per includere Shorts
+        self.scan_interval_minutes = scan_interval  # Nuovo parametro
         
         # Attributi per config entry
         self._attr_unique_id = f"youtube_{channel_id}"
         self._attr_name = f"youtube_{name}"
         self._attr_icon = ICON
 
+    @property
+    def scan_interval(self):
+        """Return the scan interval."""
+        from datetime import timedelta
+        return timedelta(minutes=self.scan_interval_minutes)
+
     async def async_update(self):
         """Update sensor - trova il primo video secondo le impostazioni di includeShorts."""
         if self.include_shorts:
-            _LOGGER.debug('%s - Running update (including Shorts)', self._name)
+            _LOGGER.debug('%s - Running update (including Shorts) - scan interval: %d minutes', 
+                         self._name, self.scan_interval_minutes)
         else:
-            _LOGGER.debug('%s - Running update (excluding Shorts)', self._name)
+            _LOGGER.debug('%s - Running update (excluding Shorts) - scan interval: %d minutes', 
+                         self._name, self.scan_interval_minutes)
             
         try:
             url = BASE_URL.format(self.channel_id)
@@ -275,6 +291,7 @@ class YoutubeSensor(SensorEntity):
                 'channel_image': self.channel_image,
                 'is_short': self.is_short,
                 'include_shorts': self.include_shorts,  # Aggiunto per debug
+                'scan_interval_minutes': self.scan_interval_minutes,  # Nuovo attributo
                 'friendly_name': self._name}
 
 

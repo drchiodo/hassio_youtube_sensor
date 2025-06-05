@@ -10,6 +10,7 @@ A custom sensor for Home Assistant that monitors YouTube channels and provides i
 - **🔴 Livestream detection**: Detect when a channel is live or when a video is a stream
 - **🎬 YouTube Shorts support**: Automatically identify Short videos with option to include/exclude them
 - **⚙️ Flexible filtering**: Choose whether to include or exclude YouTube Shorts from monitoring
+- **⏱️ Configurable scan interval**: Set custom update frequency (5-120 minutes) for each channel
 - **📊 Complete metadata**: Views, stars, publication date, thumbnails
 - **🔄 Automatic updates**: Self-updating while respecting YouTube's limits
 - **🔧 Migration support**: Automatically imports existing YAML configurations
@@ -60,6 +61,7 @@ A custom sensor for Home Assistant that monitors YouTube channels and provides i
    - **Channel ID**: The YouTube channel ID (starts with UC)
    - **Channel Name** (optional): Custom name for your sensor
    - **Include YouTube Shorts**: Toggle to include/exclude Shorts
+   - **Scan Interval**: Update frequency in minutes (5-120 minutes)
 
 5. **Click "Submit"** - the integration will validate the channel and create your sensor!
 
@@ -68,7 +70,7 @@ A custom sensor for Home Assistant that monitors YouTube channels and provides i
 The integration interface is available in multiple languages:
 
 - **🇺🇸 English** (default)
-- **🇮🇹 Italian**
+- **🇮🇹 Italian** 
 - **🇪🇸 Spanish**
 - **🇫🇷 French**
 - **🇩🇪 German**
@@ -101,22 +103,24 @@ If you prefer YAML configuration, add this to your `configuration.yaml` file:
 
 ```yaml
 sensor:
-  # Basic configuration (excludes Shorts by default)
+  # Basic configuration (excludes Shorts by default, 15min interval)
   - platform: youtube_sensor
     channel_id: UC4V3oCikXeSqYQr0hBMARwg
     name: "Breaking Italy"
   
-  # Explicitly exclude Shorts
+  # Explicitly exclude Shorts with custom interval
   - platform: youtube_sensor
     channel_id: UCx7EWheHmjCW3vX8K2d09vg
     name: "GeoPop"
     includeShorts: false
+    scan_interval: 30  # Check every 30 minutes
   
-  # Include Shorts in monitoring
+  # Include Shorts with frequent updates
   - platform: youtube_sensor
     channel_id: UC5fmXZRQS-6xa2kCbCQds8g
     name: "CURIUSS"
     includeShorts: true
+    scan_interval: 10  # Check every 10 minutes
 ```
 
 **Note**: Existing YAML configurations will be automatically detected and can be migrated to the UI if desired.
@@ -128,13 +132,23 @@ sensor:
 | **Channel ID** | string | Yes | - | YouTube channel ID (starts with UC, 24 characters) |
 | **Channel Name** | string | No | Auto-detected | Custom name for the sensor |
 | **Include YouTube Shorts** | boolean | No | `false` | Whether to include YouTube Shorts in monitoring |
+| **Scan Interval** | integer | No | `15` | Update frequency in minutes (5-120 minutes) |
 
 ### 🎬 YouTube Shorts Behavior
 
 - **Include Shorts: OFF** (default): The sensor will find the latest **regular video**, skipping any YouTube Shorts
 - **Include Shorts: ON**: The sensor will find the latest **video of any type**, including YouTube Shorts
 
-This allows you to have granular control over what type of content triggers your automations.
+### ⏱️ Scan Interval Configuration
+
+- **Default**: 15 minutes - Good balance between responsiveness and resource usage
+- **Range**: 5-120 minutes - Customize based on channel activity
+- **Recommendations**:
+  - **High-activity channels** (news, live streamers): 5-10 minutes
+  - **Regular channels**: 15-30 minutes
+  - **Low-activity channels**: 60-120 minutes
+
+This allows you to have granular control over what type of content triggers your automations and how frequently each channel is monitored.
 
 ## 📊 Entities and Attributes
 
@@ -144,7 +158,7 @@ Sensors are created with the format: `sensor.youtube_[channel_name]`
 
 Examples:
 
-- `sensor.youtube_breaking_italy`
+- `sensor.youtube_breaking_italy` 
 - `sensor.youtube_geopop`
 - `sensor.youtube_curiuss`
 
@@ -168,6 +182,7 @@ The sensor state contains the **title of the latest published video** (filtered 
 | `channel_image` | Channel image URL |
 | `is_short` | `true` if the video is a YouTube Short |
 | `include_shorts` | Configuration setting for this sensor |
+| `scan_interval_minutes` | Update frequency in minutes |
 | `friendly_name` | Original channel name |
 
 ## 🎯 Usage Examples
@@ -314,32 +329,32 @@ cards:
 ### Setup Errors
 
 **"Invalid channel ID"**
-
 - Channel ID must start with "UC"
 - Channel ID must be exactly 24 characters long
 - Example: `UC4V3oCikXeSqYQr0hBMARwg`
 
 **"Cannot connect to YouTube channel"**
-
 - Check your internet connection
 - Verify the channel exists and is public
 - Channel might be temporarily unavailable
 
 **"Already configured"**
-
 - This channel is already being monitored
 - Check existing integrations in Settings → Devices & Services
 
 ### Sensor Issues
 
 **"No non-Short videos found in feed"**
-
 - This warning appears when "Include Shorts" is OFF but the channel has only posted Shorts recently
 - The sensor will fallback to the most recent video regardless of type
 - Consider enabling "Include Shorts" if the channel posts many Shorts
 
-**Sensor shows "Unknown" or "Unavailable"**
+**"Scan interval too frequent"**
+- If you set the scan interval too low (< 5 minutes), it will be automatically adjusted
+- Very frequent updates may trigger YouTube rate limiting
+- Consider increasing the interval if you experience connection issues
 
+**Sensor shows "Unknown" or "Unavailable"**
 - Temporary connection issues
 - YouTube may have changed page structure
 - YouTube rate limiting - wait and it should recover
@@ -347,7 +362,6 @@ cards:
 ### Migration from YAML
 
 **Existing sensors disappeared**
-
 - After installing the integration, existing YAML sensors are replaced
 - Re-add channels through the UI configuration
 - Your automations will work with the new entity IDs
@@ -364,12 +378,12 @@ logger:
 ```
 
 Debug logs will show:
-
 - Integration setup process
 - Channel validation results
 - Whether Shorts are being included or excluded
 - Which videos are being skipped and why
 - Video detection results
+- Actual scan intervals being used
 
 ## 🛠️ Management
 
@@ -396,7 +410,6 @@ Debug logs will show:
 We welcome translations for additional languages! Here's how to contribute:
 
 ### File Structure
-
 ```
 custom_components/youtube_sensor/
 ├── strings.json          # English (default)
@@ -409,9 +422,7 @@ custom_components/youtube_sensor/
 ```
 
 ### Supported Languages
-
 Currently available translations:
-
 - 🇺🇸 **English** (`en`) - Default
 - 🇮🇹 **Italian** (`it`) - Complete
 - 🇪🇸 **Spanish** (`es`) - Complete  
@@ -426,9 +437,7 @@ Currently available translations:
 4. **Submit a pull request** with your translation
 
 ### Language Codes
-
 Use standard ISO 639-1 language codes:
-
 - `pt` = Portuguese
 - `nl` = Dutch  
 - `ru` = Russian
@@ -441,7 +450,6 @@ Use standard ISO 639-1 language codes:
 - `fi` = Finnish
 
 ### Translation Guidelines
-
 - Keep technical terms like "Channel ID" consistent
 - Maintain the same tone (helpful and professional)
 - Test your translation by changing Home Assistant language settings
@@ -449,10 +457,12 @@ Use standard ISO 639-1 language codes:
 
 ## ⚡ Performance and Limits
 
-- **Update frequency**: Sensor respects YouTube's cache headers (typically 15-30 minutes)
-- **Rate limiting**: YouTube may limit too frequent requests
+- **Update frequency**: Configurable per sensor (5-120 minutes)
+- **Default interval**: 15 minutes for optimal balance
+- **Rate limiting**: YouTube may limit too frequent requests - increase interval if needed
 - **Timeout**: Requests timeout after 10 seconds to prevent blocking
 - **Shorts detection**: Additional HTTP request per video to determine if it's a Short
+- **Concurrent sensors**: No limit on number of channels, but consider total request volume
 - **Concurrent sensors**: No limit on number of channels you can monitor
 
 ## 🆘 Support
@@ -467,6 +477,15 @@ If you encounter issues:
 6. **Report bugs** on GitHub with debug logs
 
 ## 📝 Changelog
+
+### v2.1.0 - Performance & Customization Update! ⚡
+
+- **NEW**: Configurable scan interval (5-120 minutes) per channel
+- **NEW**: Smart update frequency recommendations based on channel activity
+- **NEW**: Scan interval visible in sensor attributes for monitoring
+- **IMPROVED**: Better resource management with customizable polling
+- **IMPROVED**: Enhanced logging with scan interval information
+- **IMPROVED**: Optimal balance between responsiveness and YouTube rate limits
 
 ### v2.0.0 - Major Update! 🎉
 
@@ -513,4 +532,4 @@ This project is released under the MIT License. See the LICENSE file for details
 
 **⭐ If this sensor is useful to you, consider starring the repository!**
 
-**🎯 Now with modern UI configuration and multi-language support - no more YAML editing required!**
+**🎯 Now with configurable scan intervals, multi-language support, and modern UI configuration!**

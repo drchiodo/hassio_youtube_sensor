@@ -13,7 +13,17 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 import async_timeout
 
-from .const import DOMAIN, CONF_CHANNEL_ID, CONF_INCLUDE_SHORTS
+DOMAIN = "youtube_sensor"
+CONF_CHANNEL_ID = "channel_id"
+CONF_INCLUDE_SHORTS = "includeShorts"
+CONF_SCAN_INTERVAL = "scan_interval"
+
+# Default scan interval in minutes
+DEFAULT_SCAN_INTERVAL = 15
+
+# Min/Max scan intervals in minutes
+MIN_SCAN_INTERVAL = 5
+MAX_SCAN_INTERVAL = 120
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -24,6 +34,9 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Required(CONF_CHANNEL_ID): cv.string,
         vol.Optional(CONF_NAME): cv.string,
         vol.Optional(CONF_INCLUDE_SHORTS, default=False): cv.boolean,
+        vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): vol.All(
+            vol.Coerce(int), vol.Range(min=MIN_SCAN_INTERVAL, max=MAX_SCAN_INTERVAL)
+        ),
     }
 )
 
@@ -63,6 +76,10 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
         # Se l'utente non ha fornito un nome, usa quello del canale
         if not data.get(CONF_NAME):
             data[CONF_NAME] = channel_name
+        
+        # Assicurati che scan_interval sia impostato
+        if CONF_SCAN_INTERVAL not in data:
+            data[CONF_SCAN_INTERVAL] = DEFAULT_SCAN_INTERVAL
             
     except Exception as exc:
         _LOGGER.error("Error validating channel %s: %s", channel_id, exc)
@@ -92,6 +109,8 @@ class YouTubeSensorConfigFlow(ConfigFlow, domain=DOMAIN):
                 data_schema=STEP_USER_DATA_SCHEMA,
                 description_placeholders={
                     "channel_id_example": "UC4V3oCikXeSqYQr0hBMARwg",
+                    "scan_interval_min": str(MIN_SCAN_INTERVAL),
+                    "scan_interval_max": str(MAX_SCAN_INTERVAL),
                 }
             )
 
@@ -120,6 +139,8 @@ class YouTubeSensorConfigFlow(ConfigFlow, domain=DOMAIN):
             errors=errors,
             description_placeholders={
                 "channel_id_example": "UC4V3oCikXeSqYQr0hBMARwg",
+                "scan_interval_min": str(MIN_SCAN_INTERVAL),
+                "scan_interval_max": str(MAX_SCAN_INTERVAL),
             }
         )
 

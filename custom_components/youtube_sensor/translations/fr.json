@@ -7,12 +7,14 @@
         "data": {
           "channel_id": "ID de la Chaîne",
           "name": "Nom de la Chaîne (optionnel)",
-          "includeShorts": "Inclure les YouTube Shorts"
+          "includeShorts": "Inclure les YouTube Shorts",
+          "scan_interval": "Intervalle de Scan (minutes)"
         },
         "data_description": {
           "channel_id": "L'ID de la chaîne YouTube (commence par UC, ex. {channel_id_example})",
           "name": "Nom personnalisé pour le capteur. Si non fourni, le nom de la chaîne sera utilisé.",
-          "includeShorts": "S'il faut inclure les YouTube Shorts dans la surveillance. Si désactivé, seules les vidéos régulières seront suivies."
+          "includeShorts": "S'il faut inclure les YouTube Shorts dans la surveillance. Si désactivé, seules les vidéos régulières seront suivies.",
+          "scan_interval": "À quelle fréquence vérifier les nouvelles vidéos ({scan_interval_min}-{scan_interval_max} minutes). Des valeurs plus faibles vérifient plus fréquemment mais peuvent atteindre les limites de YouTube."
         }
       }
     },

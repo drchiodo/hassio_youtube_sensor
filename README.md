@@ -6,7 +6,8 @@ A custom sensor for Home Assistant that monitors YouTube channels and provides i
 
 - **Video monitoring**: Track the latest video published on a YouTube channel
 - **Livestream detection**: Detect when a channel is live or when a video is a stream
-- **YouTube Shorts support**: Automatically identify Short videos
+- **YouTube Shorts support**: Automatically identify Short videos with option to include/exclude them
+- **Flexible filtering**: Choose whether to include or exclude YouTube Shorts from monitoring
 - **Complete metadata**: Views, stars, publication date, thumbnails
 - **Automatic updates**: Self-updating while respecting YouTube's limits
 
@@ -68,30 +69,41 @@ Add the configuration to your `configuration.yaml` file:
 
 ```yaml
 sensor:
-  # Basic configuration
+  # Basic configuration (excludes Shorts by default)
   - platform: youtube_sensor
     channel_id: UC4V3oCikXeSqYQr0hBMARwg
     name: "Breaking Italy"
   
-  # Other channels
+  # Explicitly exclude Shorts
   - platform: youtube_sensor
     channel_id: UCx7EWheHmjCW3vX8K2d09vg
     name: "GeoPop"
+    includeShorts: false
   
+  # Include Shorts in monitoring
   - platform: youtube_sensor
     channel_id: UC5fmXZRQS-6xa2kCbCQds8g
     name: "CURIUSS"
+    includeShorts: true
 ```
 
 ### 3. Configuration Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `platform` | string | Yes | Must be `youtube_sensor` |
-| `channel_id` | string | Yes | YouTube channel ID (starts with UC) |
-| `name` | string | No | Custom name for the sensor |
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `platform` | string | Yes | - | Must be `youtube_sensor` |
+| `channel_id` | string | Yes | - | YouTube channel ID (starts with UC) |
+| `name` | string | No | Channel name | Custom name for the sensor |
+| `includeShorts` | boolean | No | `false` | Whether to include YouTube Shorts in monitoring |
 
-### 4. Restart
+### 4. YouTube Shorts Behavior
+
+- **`includeShorts: false`** (default): The sensor will find the latest **regular video**, skipping any YouTube Shorts
+- **`includeShorts: true`**: The sensor will find the latest **video of any type**, including YouTube Shorts
+
+This allows you to have granular control over what type of content triggers your automations.
+
+### 5. Restart
 
 After adding the configuration, restart Home Assistant.
 
@@ -109,7 +121,7 @@ Examples:
 
 ### Main State
 
-The sensor state contains the **title of the latest published video**.
+The sensor state contains the **title of the latest published video** (filtered by your `includeShorts` setting).
 
 ### Available Attributes
 
@@ -126,6 +138,7 @@ The sensor state contains the **title of the latest published video**.
 | `channel_is_live` | `true` if the channel is live |
 | `channel_image` | Channel image URL |
 | `is_short` | `true` if the video is a YouTube Short |
+| `include_shorts` | Configuration setting for this sensor |
 | `friendly_name` | Original channel name |
 
 ## 🎯 Usage Examples
@@ -165,7 +178,7 @@ styles:
     - border-radius: 10px
 ```
 
-### 3. Automation for New Videos
+### 3. Automation for New Videos (Any Type)
 
 ```yaml
 alias: Announce new video Breaking Italy
@@ -181,10 +194,54 @@ conditions:
 actions:
   - action: notify.mobile_app_ipp
     data:
+      message: New video available!
+```
+
+### 4. Automation for New Videos (Regular Videos Only)
+
+```yaml
+alias: Announce new full video Breaking Italy
+description: Send notification when new regular video is available (no Shorts)
+triggers:
+  - entity_id: sensor.youtube_breaking_italy
+    attribute: url
+    trigger: state
+conditions:
+  - condition: template
+    value_template: |
+      {{ not state_attr('sensor.youtube_breaking_italy', 'is_short') }}
+  - condition: template
+    value_template: |
+      {{ 'watch?v=' in state_attr('sensor.youtube_breaking_italy', 'url') }}
+actions:
+  - action: notify.mobile_app_ipp
+    data:
       message: New full video available!
 ```
 
-### 4. Livestream Automation
+### 5. Automation for YouTube Shorts Only
+
+```yaml
+alias: Announce new Short Breaking Italy
+description: Send notification when new YouTube Short is available
+triggers:
+  - entity_id: sensor.youtube_breaking_italy
+    attribute: url
+    trigger: state
+conditions:
+  - condition: template
+    value_template: |
+      {{ state_attr('sensor.youtube_breaking_italy', 'is_short') }}
+  - condition: template
+    value_template: |
+      {{ 'watch?v=' in state_attr('sensor.youtube_breaking_italy', 'url') }}
+actions:
+  - action: notify.mobile_app_ipp
+    data:
+      message: New Short available!
+```
+
+### 6. Livestream Automation
 
 ```yaml
 automation:
@@ -201,26 +258,21 @@ automation:
           message: "Breaking Italy is live!"
 ```
 
-### 5. Filter for YouTube Shorts
+### 7. Multi-Channel Setup with Different Settings
 
 ```yaml
-alias: Announce new video Breaking Italy (no shorts)
-description: Send notification when new video is available, excluding YouTube Shorts
-triggers:
-  - entity_id: sensor.youtube_breaking_italy
-    attribute: url
-    trigger: state
-conditions:
-  - condition: template
-    value_template: |
-      {{ not state_attr('sensor.youtube_breaking_italy', 'is_short') }}
-  - condition: template
-    value_template: |
-      {{ 'watch?v=' in state_attr('sensor.youtube_breaking_italy', 'url') }}
-actions:
-  - action: notify.mobile_app_ipp
-    data:
-      message: New full video available!
+sensor:
+  # Channel that posts mostly regular videos - exclude Shorts
+  - platform: youtube_sensor
+    channel_id: UC4V3oCikXeSqYQr0hBMARwg
+    name: "Breaking Italy"
+    includeShorts: false
+  
+  # Channel that posts lots of Shorts - include everything
+  - platform: youtube_sensor
+    channel_id: UCx7EWheHmjCW3vX8K2d09vg
+    name: "Tech Shorts"
+    includeShorts: true
 ```
 
 ## 🔍 Troubleshooting
@@ -246,6 +298,12 @@ actions:
 - YouTube may have changed page structure
 - YouTube rate limiting
 
+**`No non-Short videos found in feed`**
+
+- This warning appears when `includeShorts: false` but the channel has only posted Shorts recently
+- The sensor will fallback to the most recent video regardless of type
+- Consider setting `includeShorts: true` if the channel posts many Shorts
+
 ### Debug
 
 To enable debug logging, add to `configuration.yaml`:
@@ -257,11 +315,17 @@ logger:
     custom_components.youtube_sensor: debug
 ```
 
+Debug logs will show:
+- Whether Shorts are being included or excluded
+- Which videos are being skipped and why
+- Video detection results
+
 ## ⚡ Performance and Limits
 
 - **Update frequency**: Sensor respects YouTube's cache headers
 - **Rate limiting**: YouTube may limit too frequent requests
 - **Timeout**: Requests timeout after 10 seconds to prevent blocking
+- **Shorts detection**: Additional HTTP request per video to determine if it's a Short
 
 ## 🆘 Support
 
@@ -271,8 +335,17 @@ If you encounter issues:
 2. Verify your configuration
 3. Make sure the channel ID is correct
 4. Try with a different channel to test
+5. Enable debug logging to see detailed operation
 
 ## 📝 Changelog
+
+### v1.1.0
+
+- **NEW**: Added `includeShorts` parameter to control YouTube Shorts filtering
+- **NEW**: Enhanced logging with separate messages for Shorts inclusion/exclusion
+- **NEW**: Added `include_shorts` attribute to sensor for debugging
+- **IMPROVED**: Better logic for video filtering based on content type
+- **IMPROVED**: More descriptive warning messages when no suitable videos are found
 
 ### v1.0.1
 
@@ -283,6 +356,9 @@ If you encounter issues:
 - Support for live channels
 - Improved error handling
 - Optimized information parsing
+
+### v1.0.0
+
 - Initial release
 - Basic video monitoring
 - Livestream support
